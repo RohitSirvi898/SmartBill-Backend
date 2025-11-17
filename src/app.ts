@@ -18,15 +18,13 @@ app.use(express.static("public")) // Serve static files
 app.use(cookieParser()) // Parse cookies
 
 // Import routes
-import otpRoutes from './routes/otp.routes.js';
+import userRoutes from './routes/User/User.routes.js';
 
 // Test route
-app.get('/test',(req,res)=>{
-    res.send("API is working")
-});
+
 
 // API routes
-app.use('/api/v1/otp', otpRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Error handling middleware (must be last)
 import { errorHandler } from './middleware/error.middleware.js';

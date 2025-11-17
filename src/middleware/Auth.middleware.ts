@@ -1,10 +1,17 @@
-// import { User } from "../models/user.model.js";
+import {UserModel} from "../models/User/index.js"
 import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/AsyncHandler.js";
 import jwt from "jsonwebtoken"
 import {Response,Request,NextFunction} from "express"
 
-export const verifyJWT = asyncHandler(async(req:Request,res:Response,next:NextFunction)=>{
+declare global {
+    namespace Express {
+        interface Request {
+            user?: any;
+        }
+    }
+}
+
+export const verifyJWT = async(req:Request,res:Response,next:NextFunction)=>{
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
     
@@ -12,19 +19,19 @@ export const verifyJWT = asyncHandler(async(req:Request,res:Response,next:NextFu
             throw new ApiError(401,"Unauthorization request")
         }
     
-        const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
+        const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET as string) as {_id:string}
     
-        // const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
+        const user = await UserModel.findById(decodedToken?._id)
     
-        // if(!user){
-        //     throw new ApiError(401,"Invalid Access Token")
-        // }
+        if(!user){
+            throw new ApiError(401,"Invalid Access Token")
+        }
     
-        // req.user=user;
+        req.user=user;
         next()
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error) || "Invalid access token";
         throw new ApiError(401, message);
     }
 
-})
+}
