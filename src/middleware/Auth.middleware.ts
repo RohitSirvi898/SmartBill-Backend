@@ -30,8 +30,21 @@ export const verifyJWT = async(req:Request,res:Response,next:NextFunction)=>{
         req.user=user;
         next()
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error) || "Invalid access token";
-        throw new ApiError(401, message);
+    
+        // Check if the error is specifically because the token expired
+        if (error instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({ message: "Access token expired." });
+        }
+        
+        // Handle other JWT errors (like a bad signature)
+        if (error instanceof jwt.JsonWebTokenError) {
+        return res.status(401).json({ message: "Invalid access token." });
+        }
+
+        // Handle any other errors
+        const message = error instanceof Error ? error.message : "Authentication failed";
+        return res.status(401).json({ message });
     }
 
 }
+

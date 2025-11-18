@@ -4,6 +4,7 @@ export interface User extends Document {
     name: string;
     phone: string;
     refreshToken: string | null;
+    refreshTokenExpires: Date | null;
     generateAccessToken(): string;
-    generateRefreshToken(): string;
+    generateAndSaveRefreshToken(): string;
 }
