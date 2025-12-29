@@ -6,8 +6,11 @@ import bcrypt from 'bcrypt';
 
 const UserSchema: Schema<User> = new Schema<User>(
     {
-        name:{type:String, default:null},
+        user_name:{type:String, default:null},
+        business_name:{type:String, default:null},
         phone:{type:String, required:true, unique:true},
+        bill_expiry_days:{type:Number, default:30},
+        notification_lead_time:{type:Number, default:5},
         refreshToken:{type:String, default:null},
         refreshTokenExpires:{type:Date, default:null}
     },

@@ -4,17 +4,13 @@ import {Invoice} from "./types/index.js";
 const InvoiceSchema: Schema<Invoice> = new Schema<Invoice>(
     {
         user_id: {type :mongoose.Types.ObjectId, ref:"User", required:true},
-        filename: {type:String, required:true},
-        storage_path: {type:String, required:true},
-        status: {type:String, enum:['pending','processed','failed'], default:'pending'},
-        uploaded_at: {type:Date, default:Date.now},
-        processed_at: {type:Date},
-        extracted_data: {
-            company_name: {type:String},
-            invoice_number: {type:String},
-            date: {type:String},
-            total_amount: {type:String}
-        }
+        supplier_id: {type:mongoose.Types.ObjectId, ref:"Supplier",required:true},
+        invoice_number: {type:String, required:true},
+        invoice_date: {type:Date, required:true},
+        total_amouunt: {type:Number, required:true},
+        image_url: {type:String, required:true},
+        status: {type:String, enum:["pending","unpaid","paid","overdue"]},
+        payment_id: {type:mongoose.Types.ObjectId, ref:"Payment", default:null}
     },
     {timestamps:true}
 )

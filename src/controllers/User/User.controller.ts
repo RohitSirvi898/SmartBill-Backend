@@ -40,7 +40,7 @@ export const UpdateUser = async (req: Request, res: Response, next: NextFunction
         if(!user){
             throw new ApiError(404,"User not found")
         }
-        user.name = name;
+        user.user_name = name;
         await user.save();
         res.status(200).json(new ApiResponse({user}, "User name updated successfully"));
     }
@@ -114,42 +114,44 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
         res.status(200)
         .cookie("accessToken",accessToken,options)
         .cookie("refresh",refreshToken,options)
-        .json(new ApiResponse({ user, newUser:user.name==null, accessToken,refreshToken }, 'OTP verified and User created successfully'));
+        .json(new ApiResponse({ user, newUser:user.user_name==null, accessToken,refreshToken }, 'OTP verified and User created successfully'));
 
     } catch (error) {
         next(error);
     }
 };
 
+
+
 export const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
-  const { phone_number, refreshToken } = req.body;
-  
-  if (!phone_number || !refreshToken) {
-    return next(new ApiError(401, "Phone number and refresh token are required."));
-  }
+    const { phone_number, refreshToken } = req.body;
+    
+    if (!phone_number || !refreshToken) {
+        return next(new ApiError(401, "Phone number and refresh token are required."));
+    }
 
-  const user = await UserModel.findOne({
-    phone: phone_number,
-    refreshTokenExpires: { $gt: new Date() } 
-  });
+    const user = await UserModel.findOne({
+        phone: phone_number,
+        refreshTokenExpires: { $gt: new Date() } 
+    });
 
-  if (!user) {
-    return next(new ApiError(401, "Invalid user or expired refresh token."));
-  }
+    if (!user) {
+        return next(new ApiError(401, "Invalid user or expired refresh token."));
+    }
 
-  const validToken = await bcrypt.compare(refreshToken, user.refreshToken!);
-  if (!validToken) {
-    console.log("Invalid refresh token attempt for user:", user._id, user.refreshToken, refreshToken, validToken);
-    return next(new ApiError(401, "Invalid refresh token."));
-  }
+    const validToken = await bcrypt.compare(refreshToken, user.refreshToken!);
+    if (!validToken) {
+        console.log("Invalid refresh token attempt for user:", user._id, user.refreshToken, refreshToken, validToken);
+        return next(new ApiError(401, "Invalid refresh token."));
+    }
 
-  const newAccessToken = user.generateAccessToken();
+    const newAccessToken = user.generateAccessToken();
 
-  const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60");
-  user.refreshTokenExpires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
-  await user.save();
+    const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60");
+    user.refreshTokenExpires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+    await user.save();
 
-  return res.status(200)
+    return res.status(200)
         .cookie("accessToken", newAccessToken, { httpOnly: true, secure: true })
         .json(new ApiResponse({
             accessToken: newAccessToken
