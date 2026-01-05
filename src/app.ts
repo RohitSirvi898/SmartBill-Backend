@@ -19,12 +19,14 @@ app.use(cookieParser()) // Parse cookies
 
 // Import routes
 import userRoutes from './routes/User/User.routes.js';
+import invoiceRoutes from './routes/Invoice/Invoice.routes.js'
 
 // Test route
 
 
 // API routes
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/invoices', invoiceRoutes);
 
 // Error handling middleware (must be last)
 import { errorHandler } from './middleware/error.middleware.js';

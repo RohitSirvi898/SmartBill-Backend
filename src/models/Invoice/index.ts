@@ -7,7 +7,7 @@ const InvoiceSchema: Schema<Invoice> = new Schema<Invoice>(
         supplier_id: {type:mongoose.Types.ObjectId, ref:"Supplier",required:true},
         invoice_number: {type:String, required:true},
         invoice_date: {type:Date, required:true},
-        total_amouunt: {type:Number, required:true},
+        total_amount: {type:Number, required:true},
         image_url: {type:String, required:true},
         status: {type:String, enum:["pending","unpaid","paid","overdue"]},
         payment_id: {type:mongoose.Types.ObjectId, ref:"Payment", default:null}

@@ -3,46 +3,38 @@ import client from '../../config/twilio.js';
 import { ApiResponse } from '../../utils/ApiResponse.js';
 import { ApiError } from '../../utils/ApiError.js';
 import { UserModel } from '../../models/User/index.js';
-import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
 const serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY ? parseInt(process.env.REFRESH_TOKEN_EXPIRY) : 7; 
 
-// const generateAccessandRefreshToken = async(userid:string)=>{
-//     try{
-//         const user=await UserModel.findById(userid)
-//         if(!user){
-//             throw new ApiError(404,"User not found")
-//         }
-//         const accessToken=user.generateAccessToken();
-//         const refreshToken = crypto.randomBytes(64).toString('hex');
-//         const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-//         const refreshTokenExpires = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
-//         user.refreshToken=refreshToken
-//         await user.save({validateBeforeSave:false})
-
-//         return {accessToken,refreshToken}
-//     }catch(error){
-
-//         throw new ApiError(500,error instanceof Error ? error.message : "Internal Server Error")
-//     }
-// }
-
-export const UpdateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-        const {name} = req.body;
-        if(!name){
-            throw new ApiError(400,"Name is required")
-        }
+export const getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try{
         const user = await UserModel.findById(req.user._id);
         if(!user){
             throw new ApiError(404,"User not found")
         }
-        user.user_name = name;
+        res.status(200).json(new ApiResponse({user}, "User Fetched Successfully"));
+    }
+    catch (error) {
+        next(error);
+    }
+}
+
+
+export const UpdateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const {user_name, business_name, bill_expiry_days, notification_lead_time} = req.body;
+        const user = await UserModel.findById(req.user._id);
+        if(!user){
+            throw new ApiError(404,"User not found")
+        }
+        user.user_name = user_name || user.user_name;
+        user.business_name = business_name || user.business_name;
+        user.bill_expiry_days = bill_expiry_days || user.bill_expiry_days;
+        user.notification_lead_time = notification_lead_time || user.notification_lead_time;
         await user.save();
-        res.status(200).json(new ApiResponse({user}, "User name updated successfully"));
+        res.status(200).json(new ApiResponse({user}, "User updated successfully"));
     }
     catch (error) {
         next(error);
@@ -76,7 +68,7 @@ export const sendOtp = async (req: Request, res: Response, next: NextFunction): 
     }
 };
 
-export const verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { phone, code } = req.body;
         
@@ -104,14 +96,14 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
         }
 
         const accessToken = user.generateAccessToken();
-        const refreshToken = await user.generateAndSaveRefreshToken();
+        const refreshToken = user.generateAndSaveRefreshToken();
 
         const options = {
             httpOnly:true,
             secure: true,
         }
         
-        res.status(200)
+        return res.status(200)
         .cookie("accessToken",accessToken,options)
         .cookie("refresh",refreshToken,options)
         .json(new ApiResponse({ user, newUser:user.user_name==null, accessToken,refreshToken }, 'OTP verified and User created successfully'));

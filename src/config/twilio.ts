@@ -1,4 +1,6 @@
 import dotenv from 'dotenv';
+import { createRequire } from 'module';
+
 dotenv.config();
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID as string;
@@ -8,8 +10,16 @@ if (!accountSid || !authToken) {
   throw new Error('Twilio credentials missing');
 }
 
-// ✅ Use dynamic import to ensure proper CJS loading under ESM
-const twilio = (await import('twilio')).default;
+// Use createRequire for CommonJS module compatibility in ESM
+let client: any;
+try {
+  const require = createRequire(import.meta.url);
+  const twilio = require('twilio');
+  client = twilio(accountSid, authToken);
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error('Failed to initialize Twilio client:', errorMessage);
+  throw new Error(`Failed to initialize Twilio: ${errorMessage}`);
+}
 
-const client = twilio(accountSid, authToken);
 export default client;

@@ -3,7 +3,7 @@ export interface Invoice {
     supplier_id:object;
     invoice_number:string;
     invoice_date:Date;
-    total_amouunt:Number;
+    total_amount:Number;
     image_url:string;
     status:"pending"|"unpaid"|"paid"|"overdue";
     payment_id:object | null;
