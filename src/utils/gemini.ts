@@ -8,7 +8,7 @@ export const extractedInvoiceData = async (fileBuffer: Buffer, mimetype:string) 
 
         const prompt = `
             Analyze this invoice image and extract the following details into a JSON object:
-            - company_name (string)
+            - supplier_name (string)
             - invoice_number (string)
             - invoice_date (string, format YYYY-MM-DD)
             - total_amount (number or string, remove currency symbols)

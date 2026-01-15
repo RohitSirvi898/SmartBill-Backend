@@ -58,7 +58,8 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
         //take data from req
         //store it in mongo db
 
-        const [supplier_name,invoice_number,invoice_date,total_amount,invoice_url] = req.body;
+        const {supplier_name,invoice_number,invoice_date,total_amount,invoice_url} = req.body;
+        const userId=req.user?._id;
 
         if(!supplier_name || !invoice_number || !invoice_date || !total_amount || !invoice_url){
             throw new ApiError(400,"All Details are required!!");
@@ -67,10 +68,11 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
         let supplier = await SupplierModel.findOne({supplier_name});
 
         if(!supplier){
-            supplier = await SupplierModel.create({supplier_name});
+            supplier = await SupplierModel.create({user_id:userId,supplier_name});
         }
 
         const Invoice = await InvoiceModel.create({
+            user_id:userId,
             supplier_id:supplier._id,
             invoice_number,
             invoice_date,
@@ -117,7 +119,7 @@ export const getSupplierInvoice = async(req:Request, res:Response, next:NextFunc
 
         return res
         .status(200)
-        .json(new ApiResponse(SupplierInvoice,"Data Fetxhed"));
+        .json(new ApiResponse(SupplierInvoice,"Data Fetched"));
     }
     catch(error){
         next(error);
@@ -126,13 +128,13 @@ export const getSupplierInvoice = async(req:Request, res:Response, next:NextFunc
 
 export const getInvoice = async(req:Request, res:Response, next:NextFunction) => {
     try{
-        const {invoice_id} = req.body;
-
-        if(!invoice_id){
+        const { invoice_id } = req.params;
+        // console.log(invoice_id);
+        if(!invoice_id.trim()){
             throw new ApiError(400,"Invoice Id is Required");
         }
 
-        const invoicedata = await InvoiceModel.findById({id:invoice_id});
+        const invoicedata = await InvoiceModel.findById(invoice_id);
 
         if(!invoicedata){
             throw new ApiError(404,"Invalid invoice id");
