@@ -99,6 +99,10 @@ export const getAllInvoiceData = async(req:Request, res:Response, next:NextFunct
 
         const invoicesdata = await InvoiceModel.find({user_id:user_id}).sort({ date: -1 });
 
+        if (!invoicesdata || invoicesdata.length === 0) {
+            return res.status(200).json(new ApiResponse([], "No invoices found"));
+        }
+
         return res.status(200).json(new ApiResponse(invoicesdata,"Data Fetched"));
     }
     catch(error){

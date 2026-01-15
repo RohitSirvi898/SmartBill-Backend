@@ -9,7 +9,7 @@ const PaymentSchema:Schema<Payment> = new Schema<Payment>(
         amount: {type:Number, required:true},
         date: {type:Date, required:true},
         method: {type:String, enum:["Cash","UPI","Cheque","NetBanking"], required:true},
-        proof_image_url: {type:String, required:true},
+        proof_image_url: {type:String},
         invoice_ids: [{type:mongoose.Types.ObjectId, ref:"Invoice", required:true}]
     }
 )
