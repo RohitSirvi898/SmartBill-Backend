@@ -15,7 +15,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@controller/*": ["controllers/*"],
       "@middleware/*": ["middleware/*"],
