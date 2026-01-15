@@ -5,17 +5,32 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
+// Enable CORS
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN || '*',
     credentials: true
 }));
-app.use(express.json({limit: "16kb"})) //limit the size of the request body
-app.use(express.urlencoded({extended: true, limit: "16kb"})) //extended:true means that the urlencoded data will be parsed as a string or array
-app.use(express.static("public")) //serve static files from the public directory , also stores the pdf or files in the public directory 
-app.use(cookieParser()) //parse cookies from the request
 
-app.get('/test',(req,res)=>{
-    res.send("API is working")
-})
+// Request parsing middleware
+app.use(express.json({limit: "16kb"})) // Parse JSON bodies
+app.use(express.urlencoded({extended: true, limit: "16kb"})) // Parse URL-encoded bodies
+app.use(express.static("public")) // Serve static files
+app.use(cookieParser()) // Parse cookies
+
+// Import routes
+import userRoutes from './routes/User/User.routes.js';
+import invoiceRoutes from './routes/Invoice/Invoice.routes.js'
+import paymentRoutes from './routes/Payment/Payment.routes.js'
+// Test route
+
+
+// API routes
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/invoices', invoiceRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+
+// Error handling middleware (must be last)
+import { errorHandler } from './middleware/error.middleware.js';
+app.use(errorHandler);
 
 export default app;
