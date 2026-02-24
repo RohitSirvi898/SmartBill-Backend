@@ -62,7 +62,7 @@ export const sendOtp = async (req: Request, res: Response, next: NextFunction): 
             channel: 'sms'
         });
 
-        res.status(200).json(new ApiResponse({ sid: verification.sid }, 'OTP sent successfully'));
+        res.status(200).json(new ApiResponse('OTP sent successfully'));
     } catch (error) {
         next(error);
     }
