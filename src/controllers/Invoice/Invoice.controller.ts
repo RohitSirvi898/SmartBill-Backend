@@ -65,7 +65,13 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
             throw new ApiError(400,"All Details are required!!");
         }
 
-        let supplier = await SupplierModel.findOne({supplier_name});
+        const amount = Number(total_amount);
+
+        if (Number.isNaN(amount)) {
+            throw new ApiError(400, "Total amount must be a valid number");
+        }
+
+        let supplier = await SupplierModel.findOne({user_id:userId,supplier_name});
 
         if(!supplier){
             supplier = await SupplierModel.create({user_id:userId,supplier_name});
@@ -76,9 +82,14 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
             supplier_id:supplier._id,
             invoice_number,
             invoice_date,
-            total_amount,
+            total_amount: amount,
             image_url:invoice_url
         })
+
+        await SupplierModel.updateOne(
+            { _id: supplier._id },
+            { $inc: { total_due: amount } }
+        );
 
         return res
         .status(201)
