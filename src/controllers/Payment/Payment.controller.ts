@@ -5,10 +5,11 @@ import { NextFunction, Request, Response } from "express";
 import { uploadFileToS3 } from "../../utils/AWS_S3.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { InvoiceModel } from "../../models/Invoice/index.js";
+import { SupplierModel } from "../../models/Supplier/index.js";
 
 export const SavePayment = async(req:Request, res:Response, next:NextFunction) => {
     try{
-        const {supplier_id, amount, date, method, invoice_ids} = req.body;
+        const {supplier_id, date, method, invoice_ids} = req.body;
         const proof_image = req.file
         const user_id = req.user?._id;
 
@@ -25,9 +26,23 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
                  parsedInvoiceIds = invoice_ids.split(',');
              }
         }
-        if(!supplier_id || !amount || !method || !parsedInvoiceIds){
-            throw new ApiError(400, "All Payment Details (Supplier, Amount, Method, Invoices) are Required");
+        if(!supplier_id || !method || !parsedInvoiceIds){
+            throw new ApiError(400, "All Payment Details (Supplier, Method, Invoices) are Required");
         }
+
+        const invoicesForPayment = await InvoiceModel.find({
+            _id: { $in: parsedInvoiceIds },
+            supplier_id
+        });
+
+        if (!invoicesForPayment.length) {
+            throw new ApiError(400, "No valid invoices found for given supplier and invoice_ids");
+        }
+
+        const numericAmount = invoicesForPayment.reduce(
+            (sum, inv) => sum + Number(inv.total_amount || 0),
+            0
+        );
 
         if (!proof_image || !proof_image.originalname || !proof_image.mimetype) {
             throw new ApiError(400, "No valid file uploaded");
@@ -50,7 +65,7 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
         const payment = PaymentModel.create({
             user_id,
             supplier_id,
-            amount,
+            amount: numericAmount,
             date:paymentDate,
             method,
             proof_image_url:secureFileName,
@@ -58,7 +73,7 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
         })
 
         await InvoiceModel.updateMany(
-            {_id:{$in:parsedInvoiceIds}},
+            { _id: { $in: parsedInvoiceIds } },
             {
                 $set:{
                     status:"paid",
@@ -67,12 +82,29 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
             }
         );
 
+        const paidInvoices = await InvoiceModel.find({
+            _id: { $in: parsedInvoiceIds },
+            supplier_id
+        });
+
+        const totalPaidForSupplier = paidInvoices.reduce(
+            (sum, inv) => sum + Number(inv.total_amount || 0),
+            0
+        );
+
+        if (totalPaidForSupplier) {
+            await SupplierModel.updateOne(
+                { _id: supplier_id },
+                { $inc: { total_due: -totalPaidForSupplier } }
+            );
+        }
+
         return res
         .status(200)
         .json(new ApiResponse({
             user_id,
             supplier_id,
-            amount,
+            amount: numericAmount,
             paymentDate,
             method,
             secureFileName,
