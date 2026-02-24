@@ -9,7 +9,7 @@ import { SupplierModel } from "../../models/Supplier/index.js";
 
 export const SavePayment = async(req:Request, res:Response, next:NextFunction) => {
     try{
-        const {supplier_id, date, method, invoice_ids} = req.body;
+        const {supplier_id, method, invoice_ids} = req.body;
         const proof_image = req.file
         const user_id = req.user?._id;
 
@@ -32,7 +32,8 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
 
         const invoicesForPayment = await InvoiceModel.find({
             _id: { $in: parsedInvoiceIds },
-            supplier_id
+            supplier_id,
+            status: { $ne: "paid" }
         });
 
         if (!invoicesForPayment.length) {
@@ -60,7 +61,7 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
             fs.unlinkSync(proof_image.path);
         }
 
-        const paymentDate = date ? new Date(date) : new Date();
+        const paymentDate = new Date();
 
         const payment = PaymentModel.create({
             user_id,
@@ -73,7 +74,11 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
         })
 
         await InvoiceModel.updateMany(
-            { _id: { $in: parsedInvoiceIds } },
+            {
+                _id: { $in: parsedInvoiceIds },
+                supplier_id,
+                status: { $ne: "paid" }
+            },
             {
                 $set:{
                     status:"paid",
@@ -82,20 +87,10 @@ export const SavePayment = async(req:Request, res:Response, next:NextFunction) =
             }
         );
 
-        const paidInvoices = await InvoiceModel.find({
-            _id: { $in: parsedInvoiceIds },
-            supplier_id
-        });
-
-        const totalPaidForSupplier = paidInvoices.reduce(
-            (sum, inv) => sum + Number(inv.total_amount || 0),
-            0
-        );
-
-        if (totalPaidForSupplier) {
+        if (numericAmount) {
             await SupplierModel.updateOne(
                 { _id: supplier_id },
-                { $inc: { total_due: -totalPaidForSupplier } }
+                { $inc: { total_due: -numericAmount } }
             );
         }
 

@@ -71,7 +71,7 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
             throw new ApiError(400, "Total amount must be a valid number");
         }
 
-        let supplier = await SupplierModel.findOne({supplier_name});
+        let supplier = await SupplierModel.findOne({user_id:userId,supplier_name});
 
         if(!supplier){
             supplier = await SupplierModel.create({user_id:userId,supplier_name});
