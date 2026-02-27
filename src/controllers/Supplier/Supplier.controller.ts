@@ -33,6 +33,20 @@ export const getSuppliersSummary = async (
                     supplier_name: 1,
                     total_due: 1,
                     invoice_count: { $size: "$invoices" },
+                    unpaid_bills: {
+                        $size: {
+                            $filter: {
+                                input: "$invoices",
+                                as: "invoice",
+                                cond: {
+                                    $in: ["$$invoice.status", ["unpaid", "pending", "overdue"]],
+                                },
+                            },
+                        },
+                    },
+                    last_bill_date: {
+                        $max: "$invoices.invoice_date",
+                    },
                 },
             },
             { $sort: { supplier_name: 1 } },

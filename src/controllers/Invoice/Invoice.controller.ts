@@ -83,7 +83,8 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
             invoice_number,
             invoice_date,
             total_amount: amount,
-            image_url:invoice_url
+            image_url:invoice_url,
+            status:'unpaid'
         })
 
         await SupplierModel.updateOne(
