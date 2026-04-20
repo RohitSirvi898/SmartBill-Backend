@@ -141,4 +141,7 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 
+# Firebase Admin SDK service account keys
+src/config/smartbill-notification-firebase-adminsdk-fbsvc-b986ff5a34.json
+
 # End of https://www.toptal.com/developers/gitignore/api/node
