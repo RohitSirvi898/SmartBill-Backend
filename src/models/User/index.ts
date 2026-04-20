@@ -12,7 +12,11 @@ const UserSchema: Schema<User> = new Schema<User>(
         bill_expiry_days:{type:Number, default:30},
         notification_lead_time:{type:Number, default:5},
         refreshToken:{type:String, default:null},
-        refreshTokenExpires:{type:Date, default:null}
+        refreshTokenExpires:{type:Date, default:null},
+        fcmToken: {
+            type: String,
+            default: null
+        }
     },
     {timestamps:true}
 )

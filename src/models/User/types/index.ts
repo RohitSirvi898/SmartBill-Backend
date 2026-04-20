@@ -8,6 +8,7 @@ export interface User extends Document {
     notification_lead_time:Number;
     refreshToken: string | null;
     refreshTokenExpires: Date | null;
+    fcmToken: string | null;
     generateAccessToken(): string;
     generateAndSaveRefreshToken(): string;
 }
