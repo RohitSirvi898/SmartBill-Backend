@@ -53,11 +53,11 @@ export const sendOtp = async (req: Request, res: Response, next: NextFunction): 
           phone = '+91' + phone; // default country code (India)
         }
         
-        if (!serviceSid) {
-            throw new ApiError(500, 'Twilio Verify Service SID missing');
+        if (!serviceSid || !client) {
+            throw new ApiError(500, 'Twilio Verify is not configured');
         }
 
-        const verification = await client.verify.v2.services(serviceSid).verifications.create({
+        await client.verify.v2.services(serviceSid).verifications.create({
             to: phone,
             channel: 'sms'
         });
@@ -76,8 +76,8 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
             throw new ApiError(400, 'Phone and code required');
         }
 
-        if (!serviceSid) {
-            throw new ApiError(500, 'Twilio Verify Service SID missing');
+        if (!serviceSid || !client) {
+            throw new ApiError(500, 'Twilio Verify is not configured');
         }
 
         const check = await client.verify.v2.services(serviceSid).verificationChecks.create({
@@ -96,7 +96,7 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
         }
 
         const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateAndSaveRefreshToken();
+        const refreshToken = await user.generateAndSaveRefreshToken();
 
         const options = {
             httpOnly:true,
@@ -133,7 +133,6 @@ export const refreshAccessToken = async (req: Request, res: Response, next: Next
 
     const validToken = await bcrypt.compare(refreshToken, user.refreshToken!);
     if (!validToken) {
-        console.log("Invalid refresh token attempt for user:", user._id, user.refreshToken, refreshToken, validToken);
         return next(new ApiError(401, "Invalid refresh token."));
     }
 

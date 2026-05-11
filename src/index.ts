@@ -6,21 +6,22 @@ dotenv.config({
     path:'./.env'
 })
 
-try{
-connectDB()
-.then(() => {
-    const server = app.listen(process.env.PORT || 8000,()=>{
-        console.log(`Server is running on port ${process.env.PORT || 8000}`)
-    })
-    server.on("error", (error: Error) => {
-        console.log("Error:", error);
-        throw error
-    })
-})
-.catch((err) => {
-    console.log("Mongo db connection failed !!! ", err);
-})
-}
-catch(error){
-    console.log("Error ::::::::::",error);
-}
+const startServer = async () => {
+    try {
+        await connectDB();
+        const port = Number(process.env.PORT || 8000);
+        const server = app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+
+        server.on("error", (error: Error) => {
+            console.error("Server error:", error);
+            process.exit(1);
+        });
+    } catch (error) {
+        console.error("Startup failed:", error);
+        process.exit(1);
+    }
+};
+
+startServer();
