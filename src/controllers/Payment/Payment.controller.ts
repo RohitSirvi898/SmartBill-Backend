@@ -132,10 +132,11 @@ export const GetSinglePayment = async (req: Request, res: Response, next: NextFu
         const { id } = req.params;
 
         const payment = await PaymentModel.findById(id);
+        const invoices = await InvoiceModel.find({ payment_id: id }).populate("supplier_id");
 
         return res
             .status(200)
-            .json(new ApiResponse({ payment }, "Data Fetched Successfully"))
+            .json(new ApiResponse({ payment, invoices }, "Payment and Invoice Data Fetched Successfully"))
     }
     catch (error) {
         next(error);
