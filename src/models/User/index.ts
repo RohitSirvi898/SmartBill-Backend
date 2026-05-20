@@ -20,7 +20,8 @@ const UserSchema: Schema<User> = new Schema<User>(
         phone:{type:String, required:true, unique:true},
         bill_expiry_days:{type:Number, default:30},
         notification_lead_time:{type:Number, default:5},
-        deviceSessions: [DeviceSessionSchema]
+        deviceSessions: [DeviceSessionSchema],
+        fcmToken: {type:String, default:null}
     },
     {timestamps:true}
 )

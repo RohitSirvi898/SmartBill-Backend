@@ -1,8 +1,8 @@
 import { ApiError } from "../../utils/ApiError.js";
 import { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { SupplierModel } from "@models/Supplier/index.js";
-import { InvoiceModel } from "@models/Invoice/index.js";
+import { SupplierModel } from "../../models/Supplier/index.js";
+import { InvoiceModel } from "../../models/Invoice/index.js";
 import mongoose from "mongoose";
 
 export const getSuppliersSummary = async (
@@ -33,6 +33,20 @@ export const getSuppliersSummary = async (
                     supplier_name: 1,
                     total_due: 1,
                     invoice_count: { $size: "$invoices" },
+                    unpaid_bills: {
+                        $size: {
+                            $filter: {
+                                input: "$invoices",
+                                as: "invoice",
+                                cond: {
+                                    $in: ["$$invoice.status", ["unpaid", "pending", "overdue"]],
+                                },
+                            },
+                        },
+                    },
+                    last_bill_date: {
+                        $max: "$invoices.invoice_date",
+                    },
                 },
             },
             { $sort: { supplier_name: 1 } },
