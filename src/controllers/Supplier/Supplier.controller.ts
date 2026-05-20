@@ -1,8 +1,8 @@
 import { ApiError } from "../../utils/ApiError.js";
 import { Request, Response, NextFunction } from "express";
 import { ApiResponse } from "../../utils/ApiResponse.js";
-import { SupplierModel } from "@models/Supplier/index.js";
-import { InvoiceModel } from "@models/Invoice/index.js";
+import { SupplierModel } from "../../models/Supplier/index.js";
+import { InvoiceModel } from "../../models/Invoice/index.js";
 import mongoose from "mongoose";
 
 export const getSuppliersSummary = async (

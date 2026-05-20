@@ -23,7 +23,9 @@ import invoiceRoutes from './routes/Invoice/Invoice.routes.js'
 import paymentRoutes from './routes/Payment/Payment.routes.js'
 import supplierRoutes from './routes/Supplier/Supplier.routes.js'
 import { startBillingCronJobs } from './jobs/billing.cron.js';
-startBillingCronJobs();
+if (process.env.ENABLE_BILLING_CRON === 'true') {
+    startBillingCronJobs();
+}
 
 // API routes
 app.use('/api/v1/users', userRoutes);
