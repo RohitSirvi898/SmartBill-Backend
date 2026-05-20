@@ -143,5 +143,6 @@ dist
 
 # Firebase Admin SDK service account keys
 src/config/smartbill-notification-firebase-adminsdk-fbsvc-b986ff5a34.json
+src/config/firebase-service-account.json
 
 # End of https://www.toptal.com/developers/gitignore/api/node

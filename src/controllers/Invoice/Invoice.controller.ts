@@ -4,15 +4,11 @@ import fs from "fs";
 import { getFileViewUrl, uploadFileToS3 } from "../../utils/AWS_S3.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { extractedInvoiceData } from "../../utils/gemini.js";
-import { SupplierModel } from "@models/Supplier/index.js";
-import { InvoiceModel } from "@models/Invoice/index.js";
+import { SupplierModel } from "../../models/Supplier/index.js";
+import { InvoiceModel } from "../../models/Invoice/index.js";
 
 export const createInvoice = async (req: Request, res: Response, next: NextFunction) =>{
     try{
-        // TODO: Implement invoice creation logic here
-        // You can access uploaded file via req.file
-        // Use multer middleware to store temporary file in ./public/temp
-
         const userId=req.user?._id;
         const file=req.file;
 
@@ -27,7 +23,7 @@ export const createInvoice = async (req: Request, res: Response, next: NextFunct
         const secureFileName = `users/${userId}/invoices/${Date.now()}_${file.originalname}`;
 
         const fileBuffer = fs.readFileSync(file.path) ;
-        const [uploadResult, extractedData] = await Promise.all([
+        const [, extractedData] = await Promise.all([
             uploadFileToS3(fileBuffer, secureFileName, file.mimetype),
             extractedInvoiceData(fileBuffer,file.mimetype)
         ]);
@@ -35,9 +31,6 @@ export const createInvoice = async (req: Request, res: Response, next: NextFunct
         const fileUrl = await getFileViewUrl(secureFileName);
 
         fs.unlinkSync(file.path);
-
-        console.log("S3 Upload Complete: ",secureFileName);
-        console.log("Gemini Data: ",extractedData);
 
         return res
         .status(200)
@@ -47,7 +40,6 @@ export const createInvoice = async (req: Request, res: Response, next: NextFunct
 
         if(req.file && fs.existsSync(req.file.path)){
             fs.unlinkSync(req.file.path);
-            console.log("Temporary file deleted: ",req.file.path);
         }
         next(error);
     }
@@ -125,7 +117,6 @@ export const getAllInvoiceData = async(req:Request, res:Response, next:NextFunct
 export const getSupplierInvoice = async(req:Request, res:Response, next:NextFunction) => {
     try{
         const {supplier_id} = req.params;
-        console.log(supplier_id);
 
         if(!supplier_id.trim()){
             throw new ApiError(400, "Supplier ID is required");
@@ -145,7 +136,6 @@ export const getSupplierInvoice = async(req:Request, res:Response, next:NextFunc
 export const getInvoice = async(req:Request, res:Response, next:NextFunction) => {
     try{
         const { invoice_id } = req.params;
-        // console.log(invoice_id);
         if(!invoice_id.trim()){
             throw new ApiError(400,"Invoice Id is Required");
         }
