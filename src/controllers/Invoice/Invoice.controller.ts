@@ -6,6 +6,7 @@ import { ApiResponse } from "../../utils/ApiResponse.js";
 import { extractedInvoiceData } from "../../utils/gemini.js";
 import { SupplierModel } from "../../models/Supplier/index.js";
 import { InvoiceModel } from "../../models/Invoice/index.js";
+import { PaymentModel } from "../../models/Payment/index.js";
 
 export const createInvoice = async (req: Request, res: Response, next: NextFunction) =>{
     try{
@@ -93,7 +94,7 @@ export const saveInvoiceData = async(req:Request, res:Response, next:NextFunctio
     }
 }
 
-export const getAllInvoiceData = async(req:Request, res:Response, next:NextFunction) => {
+export const getOutstandingAndPaidAmount = async(req:Request, res:Response, next:NextFunction) => {
     try{
         const user_id = req.user?._id;
 
@@ -101,18 +102,42 @@ export const getAllInvoiceData = async(req:Request, res:Response, next:NextFunct
             throw new ApiError(404,"User Not Found");
         }
 
-        const invoicesdata = await InvoiceModel.find({user_id:user_id}).sort({ date: -1 });
+        const invoicesdata = await InvoiceModel.find({user_id:user_id}).sort({ invoice_date: -1 });
+
+        const currentDate = new Date();
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+
+        const paymentsThisMonth = await PaymentModel.find({
+            user_id: user_id,
+            date: { $gte: startOfMonth }
+        });
+
+        const amountPaidThisMonth = paymentsThisMonth.reduce((sum, payment) => sum + (Number)(payment.amount), 0);
+
+        const totalOutstandingAmount = invoicesdata.reduce((sum, invoice) => {
+            if (invoice.status !== 'paid') {
+                return sum + (Number)(invoice.total_amount || 0);
+            }
+            return sum;
+        }, 0);
 
         if (!invoicesdata || invoicesdata.length === 0) {
-            return res.status(200).json(new ApiResponse([], "No invoices found"));
+            return res.status(200).json(new ApiResponse({
+                totalOutstandingAmount,
+                amountPaidThisMonth
+            }, "No invoices found"));
         }
 
-        return res.status(200).json(new ApiResponse(invoicesdata,"Data Fetched"));
+        return res.status(200).json(new ApiResponse({
+            totalOutstandingAmount,
+            amountPaidThisMonth
+        }, "Data Fetched"));
     }
     catch(error){
         next(error);
     }
 }
+
 
 export const getSupplierInvoice = async(req:Request, res:Response, next:NextFunction) => {
     try{
