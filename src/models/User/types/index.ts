@@ -16,7 +16,8 @@ export interface User extends Document {
     bill_expiry_days:Number;
     notification_lead_time:Number;
     deviceSessions: DeviceSession[];
-    generateAccessToken(): string;
+    fcmToken?: string;
+    generateAccessToken(deviceId?: string): string;
     generateAndSaveRefreshTokenForDevice(deviceId: string, deviceName?: string): Promise<string>;
     removeDeviceSession(deviceId: string): Promise<void>;
     getActiveDeviceSessions(): DeviceSession[];

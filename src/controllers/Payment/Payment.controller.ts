@@ -2,7 +2,7 @@ import fs from "fs";
 import { PaymentModel } from "../../models/Payment/index.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { NextFunction, Request, Response } from "express";
-import { uploadFileToS3 } from "../../utils/AWS_S3.js";
+import { getFileViewUrl, uploadFileToS3 } from "../../utils/AWS_S3.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { InvoiceModel } from "../../models/Invoice/index.js";
 import { SupplierModel } from "../../models/Supplier/index.js";
@@ -139,6 +139,29 @@ export const GetSinglePayment = async (req: Request, res: Response, next: NextFu
             .json(new ApiResponse({ payment, invoices }, "Payment and Invoice Data Fetched Successfully"))
     }
     catch (error) {
+        next(error);
+    }
+}
+
+export const GetPaymentById = async(req:Request, res:Response, next:NextFunction) => {
+    try{
+        const {payment_id} = req.params;
+        const payment = await PaymentModel.findById(payment_id);
+        if(!payment){
+            throw new ApiError(404, "Payment Not Found");
+        }
+        let fileUrl: string | null = null;
+
+        if (payment.proof_image_url) {
+            fileUrl = await getFileViewUrl(payment.proof_image_url.toString());
+        }
+
+        const invoices = await InvoiceModel.find({_id:{$in:payment.invoice_ids}});
+        return res
+        .status(200)
+        .json(new ApiResponse({fileUrl, payment, invoices}, "Payment Fetched Successfully"))
+    }
+    catch(error){
         next(error);
     }
 }

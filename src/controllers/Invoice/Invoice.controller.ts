@@ -4,8 +4,8 @@ import fs from "fs";
 import { getFileViewUrl, uploadFileToS3 } from "../../utils/AWS_S3.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { extractedInvoiceData } from "../../utils/gemini.js";
-import { SupplierModel } from "@models/Supplier/index.js";
-import { InvoiceModel } from "@models/Invoice/index.js";
+import { SupplierModel } from "../../models/Supplier/index.js";
+import { InvoiceModel } from "../../models/Invoice/index.js";
 
 export const createInvoice = async (req: Request, res: Response, next: NextFunction) =>{
     try{

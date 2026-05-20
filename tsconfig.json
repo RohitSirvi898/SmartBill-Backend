@@ -5,7 +5,6 @@
     "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./src",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": ["node", "express"],
     "resolveJsonModule": true,
@@ -16,11 +15,11 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "paths": {
-      "@controller/*": ["controllers/*"],
-      "@middleware/*": ["middleware/*"],
-      "@utils/*": ["utils/*"],
-      "@routes/*": ["routes/*"],
-      "@models/*": ["models/*"]
+      "@controller/*": ["./controllers/*"],
+      "@middleware/*": ["./middleware/*"],
+      "@utils/*": ["./utils/*"],
+      "@routes/*": ["./routes/*"],
+      "@models/*": ["./models/*"]
     }
   },
   "ts-node": {

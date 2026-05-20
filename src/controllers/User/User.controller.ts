@@ -164,6 +164,21 @@ export const refreshAccessToken = async (req: Request, res: Response, next: Next
     }
 };
 
+export const updateFcmToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { fcmToken } = req.body;
+        const user = await UserModel.findById(req.user._id);
+        if(!user){
+            throw new ApiError(404,"User not found")
+        }
+        user.fcmToken = fcmToken || user.fcmToken;
+        await user.save();
+        res.status(200).json(new ApiResponse({}, "FCM Token synced successfully"));
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const testing = async (req: Request, res: Response, next: NextFunction) => {
     // for testing any part of code
     try {
