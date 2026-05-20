@@ -19,12 +19,21 @@ export const verifyJWT = async(req:Request,res:Response,next:NextFunction)=>{
             throw new ApiError(401,"Unauthorization request")
         }
     
-        const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET as string) as {_id:string}
+        const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET as string) as {_id:string, deviceId?:string}
     
         const user = await UserModel.findById(decodedToken?._id)
     
         if(!user){
             throw new ApiError(401,"Invalid Access Token")
+        }
+
+        // Update lastUsedAt for the device session if deviceId is present
+        if(decodedToken.deviceId){
+            const deviceSession = user.deviceSessions.find((session: any) => session.deviceId === decodedToken.deviceId);
+            if(deviceSession){
+                deviceSession.lastUsedAt = new Date();
+                await user.save();
+            }
         }
     
         req.user=user;
