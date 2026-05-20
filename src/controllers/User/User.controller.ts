@@ -70,10 +70,14 @@ export const sendOtp = async (req: Request, res: Response, next: NextFunction): 
 
 export const verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { phone, code } = req.body;
+        const { phone, code, deviceId, deviceName } = req.body;
         
         if (!phone || !code) {
             throw new ApiError(400, 'Phone and code required');
+        }
+
+        if (!deviceId) {
+            throw new ApiError(400, 'Device ID is required');
         }
 
         if (!serviceSid || !client) {
@@ -95,8 +99,8 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
             user = await UserModel.create({phone});
         }
 
-        const accessToken = user.generateAccessToken();
-        const refreshToken = await user.generateAndSaveRefreshToken();
+        const accessToken = user.generateAccessToken(deviceId);
+        const refreshToken = await user.generateAndSaveRefreshTokenForDevice(deviceId, deviceName);
 
         const options = {
             httpOnly:true,
@@ -116,37 +120,48 @@ export const verifyOtp = async (req: Request, res: Response, next: NextFunction)
 
 
 export const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
-    const { phone_number, refreshToken } = req.body;
+    const { phone_number, refreshToken, deviceId } = req.body;
     
-    if (!phone_number || !refreshToken) {
-        return next(new ApiError(401, "Phone number and refresh token are required."));
+    if (!phone_number || !refreshToken || !deviceId) {
+        return next(new ApiError(401, "Phone number, refresh token, and device ID are required."));
     }
 
-    const user = await UserModel.findOne({
-        phone: phone_number,
-        refreshTokenExpires: { $gt: new Date() } 
-    });
+    try {
+        const user = await UserModel.findOne({ phone: phone_number });
 
-    if (!user) {
-        return next(new ApiError(401, "Invalid user or expired refresh token."));
-    }
+        if (!user) {
+            return next(new ApiError(401, "User not found."));
+        }
 
-    const validToken = await bcrypt.compare(refreshToken, user.refreshToken!);
-    if (!validToken) {
-        return next(new ApiError(401, "Invalid refresh token."));
-    }
+        // Find the device session
+        const deviceSession = user.deviceSessions.find(
+            (session: any) => session.deviceId === deviceId && session.refreshTokenExpires > new Date()
+        );
 
-    const newAccessToken = user.generateAccessToken();
+        if (!deviceSession) {
+            return next(new ApiError(401, "Invalid device or expired session."));
+        }
 
-    const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || "60");
-    user.refreshTokenExpires = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
-    await user.save();
+        // Verify the refresh token
+        const validToken = await bcrypt.compare(refreshToken, deviceSession.refreshToken);
+        if (!validToken) {
+            return next(new ApiError(401, "Invalid refresh token."));
+        }
 
-    return res.status(200)
-        .cookie("accessToken", newAccessToken, { httpOnly: true, secure: true })
-        .json(new ApiResponse({
-            accessToken: newAccessToken
+        // Update last used time
+        deviceSession.lastUsedAt = new Date();
+        await user.save();
+
+        const newAccessToken = user.generateAccessToken();
+
+        return res.status(200)
+            .cookie("accessToken", newAccessToken, { httpOnly: true, secure: true })
+            .json(new ApiResponse({
+                accessToken: newAccessToken
             }, "Access token refreshed successfully"));
+    } catch (error) {
+        return next(error);
+    }
 };
 
 export const testing = async (req: Request, res: Response, next: NextFunction) => {
@@ -157,3 +172,61 @@ export const testing = async (req: Request, res: Response, next: NextFunction) =
         next(error);
     }
 }
+
+export const logoutFromDevice = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { deviceId } = req.body;
+        
+        if (!deviceId) {
+            throw new ApiError(400, 'Device ID is required');
+        }
+
+        const user = await UserModel.findById(req.user._id);
+        if (!user) {
+            throw new ApiError(404, 'User not found');
+        }
+
+        await user.removeDeviceSession(deviceId);
+        
+        res.status(200).json(new ApiResponse({}, 'Logged out from device successfully'));
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getActiveSessions = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await UserModel.findById(req.user._id);
+        if (!user) {
+            throw new ApiError(404, 'User not found');
+        }
+
+        const activeSessions = user.getActiveDeviceSessions().map((session: any) => ({
+            deviceId: session.deviceId,
+            deviceName: session.deviceName,
+            createdAt: session.createdAt,
+            lastUsedAt: session.lastUsedAt,
+            expiresAt: session.refreshTokenExpires
+        }));
+
+        res.status(200).json(new ApiResponse({ sessions: activeSessions }, 'Active sessions retrieved successfully'));
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const logoutFromAllDevices = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await UserModel.findById(req.user._id);
+        if (!user) {
+            throw new ApiError(404, 'User not found');
+        }
+
+        user.deviceSessions = [];
+        await user.save();
+
+        res.status(200).json(new ApiResponse({}, 'Logged out from all devices successfully'));
+    } catch (error) {
+        next(error);
+    }
+};
