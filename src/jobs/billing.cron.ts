@@ -9,12 +9,13 @@ export const startBillingCronJobs = () => {
         console.log('Running daily due-bill check...');
 
         try {
-            const startOfDay = new Date();
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + 1);
+            const startOfDay = new Date(targetDate);
             startOfDay.setHours(0, 0, 0, 0);
 
-            const endOfDay = new Date();
+            const endOfDay = new Date(targetDate);
             endOfDay.setHours(23, 59, 59, 999);
-
             const dueInvoices = await InvoiceModel.find({
                 status: 'unpaid',
                 invoice_date: {
@@ -40,7 +41,7 @@ export const startBillingCronJobs = () => {
                 if (user.fcmToken) {
                     await sendDueBillNotification(
                         user.fcmToken, 
-                        supplier.name, 
+                        supplier.supplier_name, 
                         Number(invoice.total_amount)
                     );
                 }
