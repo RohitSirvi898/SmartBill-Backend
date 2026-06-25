@@ -5,28 +5,32 @@ import { sendDueBillNotification } from "../services/notification.service.js";
 
 // This cron job runs every day at 8:00 AM
 export const startBillingCronJobs = () => {
-    cron.schedule('* * * * *', async () => {
+    cron.schedule('30 2 * * *', async () => {
         console.log('Running daily due-bill check...');
 
         try {
-            // 1. Calculate tomorrow's date range
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-            
-            const dayAfterTomorrow = new Date(tomorrow);
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
 
-            // 2. Find all UNPAID invoices due exactly tomorrow
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+
             const dueInvoices = await InvoiceModel.find({
                 status: 'unpaid',
-                date: {
-                    $gte: tomorrow,
-                    $lt: dayAfterTomorrow
+                invoice_date: {
+                    $gte: startOfDay,
+                    $lte: endOfDay
                 }
-            }).populate('user_id supplier_id'); 
+            }).populate('user_id supplier_id');
 
-            // 3. Send notifications
+            console.log(`Found ${dueInvoices.length} invoices due today!`);
+
+            if (dueInvoices.length === 0) {
+                console.log('No invoices to process. Exiting.');
+                return;
+            }
+
+            // Send notifications
             for (const invoice of dueInvoices) {
                 // Assuming you populated the user to get their FCM token
                 const user = invoice.user_id as any; 
@@ -42,7 +46,7 @@ export const startBillingCronJobs = () => {
                 }
             }
         } catch (error) {
-            console.error('Error running billing cron job:', error);
+            console.error('❌ CRON ERROR:', error);
         }
     });
 };
