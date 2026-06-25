@@ -9,7 +9,15 @@ const getServiceAccount = (): ServiceAccount => {
   }
 
   try {
-    return JSON.parse(raw) as ServiceAccount;
+    // 1. Parse the raw string into a JSON object
+    const serviceAccount = JSON.parse(raw) as ServiceAccount;
+    
+    // 2. THE FIX: Convert literal '\n' strings back to actual newlines
+    if (serviceAccount.privateKey) {
+      serviceAccount.privateKey = serviceAccount.privateKey.replace(/\\n/g, '\n');
+    }
+    
+    return serviceAccount;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Invalid FIREBASE_SERVICE_ACCOUNT_JSON: ${errorMessage}`);
