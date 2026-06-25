@@ -5,7 +5,7 @@ import { sendDueBillNotification } from "../services/notification.service.js";
 
 // This cron job runs every day at 8:00 AM
 export const startBillingCronJobs = () => {
-    cron.schedule('0 8 * * *', async () => {
+    cron.schedule('* * * * *', async () => {
         console.log('Running daily due-bill check...');
 
         try {
