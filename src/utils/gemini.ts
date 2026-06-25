@@ -4,7 +4,7 @@ const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export const extractedInvoiceData = async (fileBuffer: Buffer, mimetype:string) => {
     try{
-        const model = genAi.getGenerativeModel({model:"gemini-1.5-flash"});
+        const model = genAi.getGenerativeModel({model:"gemini-3.1-flash-lite"});
 
         const prompt = `
             Analyze this invoice image and extract the following details into a JSON object:
