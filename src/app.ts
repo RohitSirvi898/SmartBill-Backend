@@ -28,8 +28,11 @@ if (process.env.ENABLE_BILLING_CRON === 'true') {
 }
 
 // API routes
-app.post('/api/v1/health',(req, res) => {
-    res.status(200).json({status: 'ok'});
+app.get('/api/v1/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+app.post('/api/v1/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
