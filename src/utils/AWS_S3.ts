@@ -23,11 +23,11 @@ export const uploadFileToS3 = async (fileBuffer: Buffer, fileName: string, mimeT
     return await s3Client.send(command);
 };
 
-export const getFileViewUrl = async (fileName: string) => {
+export const getFileViewUrl = async (fileName: string, expiresIn = 900) => {
     const command = new GetObjectCommand({
         Bucket: BUCKET_NAME,
         Key: fileName
     });
 
-    return await getSignedUrl(s3Client, command, {expiresIn: 900});
+    return await getSignedUrl(s3Client, command, {expiresIn});
 }

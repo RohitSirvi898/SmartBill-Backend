@@ -17,7 +17,7 @@ export const startBillingCronJobs = () => {
             const endOfDay = new Date(targetDate);
             endOfDay.setHours(23, 59, 59, 999);
             const dueInvoices = await InvoiceModel.find({
-                status: 'unpaid',
+                status: { $in: ['unpaid', 'VERIFIED'] },
                 invoice_date: {
                     $gte: startOfDay,
                     $lte: endOfDay
