@@ -201,6 +201,22 @@ export const getOutstandingAndPaidAmount = async(req:Request, res:Response, next
             throw new ApiError(404,"User Not Found");
         }
 
+        // The review client asks for /invoices?status=NEEDS_REVIEW. Keep the
+        // existing summary response intact when no status is supplied.
+        const requestedStatus = typeof req.query.status === "string" ? req.query.status.trim() : "";
+        if (requestedStatus) {
+            const invoices = await InvoiceModel.find({ user_id, status: requestedStatus })
+                .sort({ createdAt: 1 });
+            const invoicesWithFileUrls = await Promise.all(invoices.map(async (invoice) => ({
+                ...invoice.toObject(),
+                // image_url remains the internal S3 key; clients only receive
+                // the short-lived signed URL required to render it.
+                fileUrl: await getFileViewUrl(invoice.image_url),
+            })));
+
+            return res.status(200).json(new ApiResponse(invoicesWithFileUrls, "Invoices fetched"));
+        }
+
         const invoicesdata = await InvoiceModel.find({user_id:user_id}).sort({ invoice_date: -1 });
 
         const currentDate = new Date();
