@@ -1,10 +1,14 @@
 export interface Invoice {
     user_id:object;
-    supplier_id:object;
-    invoice_number:string;
-    invoice_date:Date;
-    total_amount:Number;
+    supplier_id?:object;
+    merchant?: string;
+    invoice_number?:string;
+    invoice_date?:Date;
+    total_amount?:number;
     image_url:string;
-    status:"pending"|"unpaid"|"paid"|"overdue";
-    payment_id:object | null;
+    status:"PROCESSING"|"NEEDS_REVIEW"|"VERIFIED"|"FAILED"|"pending"|"unpaid"|"paid"|"overdue";
+    payment_id?:object | null;
+    ledger_applied?: boolean;
+    processing_error?: string;
+    extracted_at?: Date;
 }

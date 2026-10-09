@@ -9,4 +9,7 @@ const SupplierSchema: Schema<Supplier> = new Schema<Supplier>(
     }
 )
 
+// Prevent concurrent OCR jobs from creating duplicate ledger accounts.
+SupplierSchema.index({ user_id: 1, supplier_name: 1 }, { unique: true });
+
 export const SupplierModel = mongoose.model<Supplier>("Supplier",SupplierSchema)
